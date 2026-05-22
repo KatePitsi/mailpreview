@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MailScope</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080b12;--s1:#0f1320;--s2:#161c2d;--s3:#1d2540;--border:#252e4a;--txt:#e2e8ff;--muted:#5a6a9a;--accent:#3b82f6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--r:10px}
+body{background:var(--bg);color:var(--txt);font-family:"Cabinet Grotesk",sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+button,select,input,textarea{font-family:"Cabinet Grotesk",sans-serif}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:14px}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.b-live{background:rgba(34,197,94,.15);color:#22c55e}
+.b-err{background:rgba(239,68,68,.15);color:#ef4444}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:340px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.lsec{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.lbl{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+select,input[type=text]{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;padding:8px 10px;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
+.sb-info{background:var(--s2);border-radius:8px;padding:9px 11px;font-size:11px;color:var(--muted);margin-top:8px;display:flex;flex-direction:column;gap:3px}
+.sb-info strong{color:var(--txt)}
+.editor-wrap{flex:1;display:flex;flex-direction:column;padding:14px 16px;gap:10px;overflow:hidden;min-height:0}
+textarea{flex:1;background:var(--s2);border:1.5px solid var(--border);border-radius:8px;color:#c8d8ff;font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.65;padding:12px;resize:none;outline:none;min-height:0}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--muted)}
+.btn-run{width:100%;padding:9px;font-size:13px;font-weight:700;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-run:hover{background:#60a5fa;transform:translateY(-1px)}
+.btn-run:disabled{background:var(--s3);color:var(--muted);cursor:not-allowed;transform:none}
+.status{padding:9px 12px;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:8px;line-height:1.4}
+.s-info{background:rgba(59,130,246,.12);color:var(--accent)}
+.s-ok{background:rgba(34,197,94,.12);color:var(--green)}
+.s-err{background:rgba(239,68,68,.12);color:var(--red)}
+.spin{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rtabs{display:flex;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0}
+.rtab{padding:12px 18px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;user-select:none}
+.rtab:hover{color:var(--txt)}
+.rtab.active{color:var(--txt);border-bottom-color:var(--accent)}
+.rbadge{background:var(--red);color:#fff;border-radius:20px;font-size:10px;font-family:"JetBrains Mono",monospace;padding:1px 6px;display:none;margin-left:4px}
+.rbadge.on{display:inline}
+.view{display:none;flex:1;flex-direction:column;overflow:hidden}
+.view.active{display:flex}
+.scroll{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center;padding:40px;color:var(--muted)}
+.empty-ico{font-size:40px;opacity:.3;margin-bottom:4px}
+.empty h3{font-size:17px;font-weight:800;color:var(--txt)}
+.empty p{font-size:13px;max-width:260px;line-height:1.6}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.score-tile{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.st-top{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.st-dot{width:8px;height:8px;border-radius:50%}
+.st-name{font-size:12px;font-weight:700}
+.st-num{font-size:26px;font-weight:700;line-height:1}
+.st-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.st-bar{height:3px;background:var(--border);border-radius:3px;margin-top:8px;overflow:hidden}
+.st-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.sec-lbl{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:"";flex:1;height:1px;background:var(--border)}
+.issue-card{background:var(--s1);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.issue-hdr{display:flex;align-items:center;gap:10px;padding:10px 13px;cursor:pointer;user-select:none;transition:.12s background}
+.issue-hdr:hover{background:var(--s2)}
+.i-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.i-title{flex:1;font-size:13px;font-weight:700}
+.i-tags{display:flex;gap:4px;flex-wrap:wrap}
+.itag{font-family:"JetBrains Mono",monospace;font-size:9.5px;padding:1px 7px;border-radius:4px;font-weight:600}
+.t-ol{background:rgba(0,120,212,.2);color:#7ec8ff}
+.t-gm{background:rgba(234,67,53,.2);color:#ff9d96}
+.t-yh{background:rgba(124,58,237,.2);color:#c4aafe}
+.t-ap{background:rgba(55,65,81,.3);color:#9ca3af}
+.chevron{color:var(--muted);font-size:12px;transition:transform .2s;flex-shrink:0}
+.issue-card.open .chevron{transform:rotate(90deg)}
+.issue-body{display:none;padding:0 13px 13px 31px;border-top:1px solid var(--border)}
+.issue-card.open .issue-body{display:block}
+.i-desc{font-size:12.5px;color:#8a9acd;line-height:1.7;padding:9px 0}
+.i-fix{background:var(--s2);border-radius:7px;padding:9px 12px;border-left:2px solid var(--accent)}
+.fix-lbl{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.fix-code{font-family:"JetBrains Mono",monospace;font-size:11px;color:#c8d8ff;white-space:pre-wrap;word-break:break-word;line-height:1.65}
+.real-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.12);color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;margin-bottom:12px}
+.spam-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.spam-tile{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.spam-num{font-size:30px;font-weight:700;line-height:1}
+.spam-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+.spam-rule{font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:9px}
+.spam-rule:last-child{border-bottom:none}
+.pts{font-family:"JetBrains Mono",monospace;font-size:11px;padding:2px 8px;border-radius:4px;flex-shrink:0;font-weight:600}
+.pts-p{background:rgba(239,68,68,.15);color:var(--red)}
+.pts-n{background:rgba(34,197,94,.15);color:var(--green)}
+.prev-sec{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.prev-bar{background:var(--s2);padding:9px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+.pb-dot{width:8px;height:8px;border-radius:50%}
+.pb-name{font-size:13px;font-weight:700;flex:1}
+.pb-note{font-size:11px;color:var(--muted)}
+iframe{border:none;width:100%;display:block;background:#fff}
+.src-box{font-family:"JetBrains Mono",monospace;font-size:11px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;white-space:pre-wrap;word-break:break-word;line-height:1.65;color:#c8d8ff;max-height:500px;overflow-y:auto}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo"><div class="logo-mark">&#128236;</div>MailScope&nbsp;<span class="badge b-live" id="liveBadge" style="display:none">Live</span><span class="badge b-err" id="errBadge" style="display:none">Error</span></div>
+  <span style="font-size:12px;color:var(--muted)">Powered by Mailtrap API</span>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="lsec">
+      <div class="lbl">Sandbox inbox</div>
+      <select id="sandboxSel" onchange="onSbChange()"><option>Loading...</option></select>
+      <div class="sb-info" id="sbInfo" style="display:none">
+        <div>Messages: <strong id="sbCount">-</strong></div>
+        <div>SMTP: <strong>sandbox.smtp.mailtrap.io</strong></div>
+      </div>
+    </div>
+    <div class="lsec">
+      <div class="lbl">Subject line</div>
+      <input type="text" id="subject" value="MailScope Test Email"/>
+    </div>
+    <div class="editor-wrap">
+      <div class="lbl" style="margin-bottom:0">Email HTML</div>
+      <textarea id="htmlInput" placeholder="Paste your email HTML here..." spellcheck="false"></textarea>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+      <div id="statusEl" style="display:none"></div>
+      <button class="btn-run" id="runBtn" onclick="runAll()" disabled>&#128640; Send &amp; Analyze</button>
+      <div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.5">Real Mailtrap HTML compatibility check + SpamAssassin score</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="rtabs">
+      <div class="rtab active" onclick="switchTab('compat',this)">&#128269; Compatibility<span class="rbadge" id="issueBadge"></span></div>
+      <div class="rtab" onclick="switchTab('spam',this)">&#9888; Spam Score</div>
+      <div class="rtab" onclick="switchTab('preview',this)">&#128187; Preview</div>
+      <div class="rtab" onclick="switchTab('source',this)">&#128196; Source</div>
+    </div>
+    <div class="view active" id="view-compat">
+      <div class="empty" id="ce"><div class="empty-ico">&#128269;</div><h3>Nothing yet</h3><p>Paste your HTML and click Send &amp; Analyze</p></div>
+      <div class="scroll" id="cd" style="display:none"></div>
+    </div>
+    <div class="view" id="view-spam">
+      <div class="empty" id="se"><div class="empty-ico">&#9888;</div><h3>Nothing yet</h3><p>Run analysis to see SpamAssassin score</p></div>
+      <div class="scroll" id="sd" style="display:none"></div>
+    </div>
+    <div class="view" id="view-preview">
+      <div class="empty" id="pe"><div class="empty-ico">&#128187;</div><h3>Nothing yet</h3><p>Run analysis to preview HTML</p></div>
+      <div class="scroll" id="pd" style="display:none"></div>
+    </div>
+    <div class="view" id="view-source">
+      <div class="empty" id="soe"><div class="empty-ico">&#128196;</div><h3>Nothing yet</h3><p>Run analysis to view HTML source</p></div>
+      <div class="scroll" id="sod" style="display:none"></div>
+    </div>
+  </div>
+</div>
+<script>
+const BASE='http://localhost:3333';
+let sandboxes=[],selSb=null,accountId=null;
+async function get(u){const r=await fetch(BASE+u);if(!r.ok)throw new Error(r.status+': '+await r.text());return r.json();}
+async function getText(u){const r=await fetch(BASE+u);if(!r.ok)throw new Error(r.status);return r.text();}
+async function post(u,b){const r=await fetch(BASE+u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();if(!r.ok)throw new Error(r.status+': '+t);try{return JSON.parse(t);}catch{return t;}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setStatus(msg,type){const el=document.getElementById('statusEl');el.style.display='flex';el.className='status s-'+(type==='loading'?'info':type==='ok'?'ok':'err');el.innerHTML=type==='loading'?'<div class="spin"></div>'+msg:msg;}
+function hideStatus(){document.getElementById('statusEl').style.display='none';}
+async function init(){
+  try{
+    setStatus('Connecting to Mailtrap...','loading');
+    const ac=await get('/api/accounts');
+    accountId=ac[0].id;
+    const sb=await get('/api/sandboxes');
+    sandboxes=sb;
+    const sel=document.getElementById('sandboxSel');
+    sel.innerHTML=sb.map(s=>`<option value="${s.id}">${s.name} (${s.emails_count} msgs)</option>`).join('');
+    if(sb.length){selSb=sb[0];showSbInfo(sb[0]);}
+    document.getElementById('liveBadge').style.display='inline';
+    document.getElementById('runBtn').disabled=false;
+    hideStatus();
+  }catch(e){
+    document.getElementById('errBadge').style.display='inline';
+    setStatus('Cannot reach proxy server.<br>Run: <strong>node server.js</strong> in the mailscope-app folder, then refresh.','err');
+  }
+}
+function onSbChange(){const id=parseInt(document.getElementById('sandboxSel').value);selSb=sandboxes.find(s=>s.id===id);if(selSb)showSbInfo(selSb);}
+function showSbInfo(s){document.getElementById('sbInfo').style.display='flex';document.getElementById('sbCount').textContent=s.emails_count;}
+async function runAll(){
+  const html=document.getElementById('htmlInput').value.trim();
+  if(!html){setStatus('Paste your email HTML first.','err');return;}
+  if(!selSb||!accountId){setStatus('Not connected.','err');return;}
+  const btn=document.getElementById('runBtn');btn.disabled=true;
+  const sbId=selSb.id;
+  const subject=document.getElementById('subject').value||'MailScope Test';
+  const beforeTs=Date.now();
+  try{
+    setStatus('Sending email to Mailtrap sandbox...','loading');
+    await post(`/sandbox-api/send/inbox/${sbId}`,{from:{email:'mailscope@test.com',name:'MailScope'},to:[{email:'preview@mailscope.test'}],subject,html});
+    setStatus('Waiting for message to arrive...','loading');
+    const msg=await waitForMsg(sbId,beforeTs);
+    const msgId=msg.id;
+    setStatus('Running HTML analysis + spam check...','loading');
+    const base=`/api/accounts/${accountId}/inboxes/${sbId}/messages/${msgId}`;
+    const [comp,spam,body]=await Promise.allSettled([get(base+'/analyze'),get(base+'/spam_report'),getText(base+'/body.html')]);
+    setStatus('&#10003; Analysis complete!','ok');setTimeout(hideStatus,3000);
+    renderCompat(comp.value,msg);
+    renderSpam(spam.value);
+    renderPreview(body.value||html,html);
+  }catch(e){setStatus('&#10007; '+e.message,'err');}
+  finally{btn.disabled=false;}
+}
+async function waitForMsg(sbId,beforeTs,tries=20){
+  for(let i=0;i<tries;i++){
+    await sleep(1500);
+    const msgs=await get(`/api/accounts/${accountId}/inboxes/${sbId}/messages`);
+    const arr=Array.isArray(msgs)?msgs:(msgs.data||[]);
+    if(arr.length){arr.sort((a,b)=>new Date(b.created_at||b.sent_at)-new Date(a.created_at||a.sent_at));const f=arr.find(m=>new Date(m.created_at||m.sent_at)>=beforeTs-3000);if(f)return f;return arr[0];}
+  }
+  throw new Error('Message not found after 30s. Check your sandbox inbox manually.');
+}
+function sc(s){return s>=80?'#22c55e':s>=50?'#f59e0b':'#ef4444';}
+function sl(s){return s>=80?'Good':s>=50?'Issues':'Broken';}
+function renderCompat(data,msg){
+  const errors=(data&&data.report&&data.report.errors?data.report.errors:[]).filter(Boolean);
+  const n=errors.length;
+  const b=document.getElementById('issueBadge');b.textContent=n;b.className='rbadge'+(n>0?' on':'');
+  const scores={outlook:100,gmail:100,yahoo:100,apple:100};
+  errors.forEach(e=>{
+    const all=[...(e.email_clients&&e.email_clients.desktop||[]),...(e.email_clients&&e.email_clients.mobile||[]),...(e.email_clients&&e.email_clients.web||[])];
+    all.forEach(c=>{const cl=c.toLowerCase();if(cl.includes('outlook'))scores.outlook=Math.max(0,scores.outlook-12);else if(cl.includes('gmail'))scores.gmail=Math.max(0,scores.gmail-12);else if(cl.includes('yahoo'))scores.yahoo=Math.max(0,scores.yahoo-12);else if(cl.includes('apple')||cl.includes('ios'))scores.apple=Math.max(0,scores.apple-12);});
+  });
+  const cm={outlook:{name:'Outlook',color:'#0078d4'},gmail:{name:'Gmail',color:'#ea4335'},yahoo:{name:'Yahoo',color:'#7c3aed'},apple:{name:'Apple Mail',color:'#374151'}};
+  let h='<div class="real-pill">&#10003; Real data: Mailtrap HTML Check (caniemail.com)</div>';
+  h+='<div class="score-grid">';
+  Object.entries(scores).forEach(([k,s])=>{const m=cm[k];const col=sc(s);h+=`<div class="score-tile"><div class="st-top"><div class="st-dot" style="background:${m.color}"></div><div class="st-name">${m.name}</div></div><div class="st-num" style="color:${col}">${s}%</div><div class="st-lbl">${sl(s)}</div><div class="st-bar"><div class="st-fill" style="width:${s}%;background:${col}"></div></div></div>`;});
+  h+='</div>';
+  if(n===0){h+='<div style="text-align:center;padding:30px;color:var(--green);font-size:14px">&#10003; No compatibility issues found!</div>';}
+  else{
+    h+=`<div class="sec-lbl">Issues flagged by Mailtrap (${n})</div>`;
+    errors.forEach((e,i)=>{
+      if(!e||!e.rule_name)return;
+      const desktop=e.email_clients&&e.email_clients.desktop||[];
+      const mobile=e.email_clients&&e.email_clients.mobile||[];
+      const web=e.email_clients&&e.email_clients.web||[];
+      const allC=[...new Set([...desktop,...mobile,...web])];
+      const tagFor=c=>{const cl=c.toLowerCase();if(cl.includes('outlook'))return'<span class="itag t-ol">Outlook</span>';if(cl.includes('gmail'))return'<span class="itag t-gm">Gmail</span>';if(cl.includes('yahoo'))return'<span class="itag t-yh">Yahoo</span>';if(cl.includes('apple')||cl.includes('ios'))return'<span class="itag t-ap">Apple</span>';return`<span class="itag t-ap">${c.split(' ')[0]}</span>`;};
+      const tags=[...new Set(allC.slice(0,5).map(tagFor))].join('');
+      const lr=e.error_line?' &middot; Line '+e.error_line:'';
+      h+=`<div class="issue-card" id="ic${i}"><div class="issue-hdr" onclick="document.getElementById('ic${i}').classList.toggle('open')"><div class="i-dot" style="background:var(--yellow)"></div><div class="i-title">${e.rule_name.replace(/_/g,' ')}</div><div class="i-tags">${tags}</div><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--muted)">${lr}</span><span class="chevron">&#9658;</span></div><div class="issue-body"><div class="i-desc">Not supported in: <strong style="color:var(--txt)">${allC.slice(0,6).join(', ')}${allC.length>6?' +'+( allC.length-6)+' more':''}</strong></div>${desktop.length?'<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Desktop: '+desktop.slice(0,5).join(', ')+'</div>':''}${mobile.length?'<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Mobile: '+mobile.slice(0,5).join(', ')+'</div>':''}${web.length?'<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Web: '+web.slice(0,5).join(', ')+'</div>':''}<div class="i-fix"><div class="fix-lbl">Source</div><div class="fix-code">Rule: ${e.rule_name}${lr}\nData: Mailtrap HTML Check &middot; caniemail.com</div></div></div></div>`;
+    });
+  }
+  h+=`<div style="margin-top:8px;font-size:11px;color:var(--muted)">Message ID: <span style="font-family:JetBrains Mono,monospace">${msg.id}</span></div>`;
+  document.getElementById('ce').style.display='none';const el=document.getElementById('cd');el.style.display='flex';el.innerHTML=h;
+}
+function renderSpam(data){
+  const r=data&&data.report||{};const score=typeof r.Score==='number'?r.Score:null;const isSpam=r.Spam;const thresh=r.Threshold||5;const details=(r.Details||[]).filter(Boolean);
+  const col=score===null?'var(--txt)':score<2?'#22c55e':score<5?'#f59e0b':'#ef4444';
+  let h='<div class="real-pill">&#10003; Real SpamAssassin score via Mailtrap</div>';
+  h+=`<div class="spam-grid"><div class="spam-tile"><div class="spam-num" style="color:${col}">${score!==null?score.toFixed(1):'--'}</div><div class="spam-lbl">Score (spam if &gt; ${thresh})</div></div><div class="spam-tile"><div class="spam-num" style="color:${isSpam===undefined?'var(--txt)':isSpam?'#ef4444':'#22c55e'}">${isSpam===undefined?'--':isSpam?'SPAM':'Clean'}</div><div class="spam-lbl">${r.ResponseMessage||'Verdict'}</div></div></div>`;
+  if(details.length){h+=`<div class="sec-lbl">SpamAssassin rules (${details.length})</div>`;details.forEach(d=>{const pos=(d.Pts||0)>0;h+=`<div class="spam-rule"><span class="pts ${pos?'pts-p':'pts-n'}">${pos?'+':''}${(d.Pts||0).toFixed(2)}</span><div><div style="font-weight:700;font-size:12px">${d.RuleName||''}</div><div style="font-size:11px;color:var(--muted)">${d.Description||''}</div></div></div>`;});}
+  else{h+='<div style="text-align:center;padding:20px;color:var(--green);font-size:13px">&#10003; No spam rules triggered.</div>';}
+  document.getElementById('se').style.display='none';const el=document.getElementById('sd');el.style.display='flex';el.innerHTML=h;
+}
+function renderPreview(renderedHtml,originalHtml){
+  const html=renderedHtml||originalHtml;
+  const clients=[{name:'Gmail Web',color:'#ea4335'},{name:'Outlook 365',color:'#0078d4'},{name:'Yahoo Mail',color:'#7c3aed'},{name:'Apple Mail',color:'#374151'}];
+  let out='<div class="real-pill">&#10003; HTML as received by Mailtrap</div>';
+  clients.forEach(c=>{const fid='pf'+c.name.replace(/\s/g,'');out+=`<div class="prev-sec"><div class="prev-bar"><div class="pb-dot" style="background:${c.color}"></div><div class="pb-name">${c.name}</div><span class="pb-note">browser render</span></div><iframe id="${fid}" height="320" scrolling="yes"></iframe></div>`;});
+  document.getElementById('pe').style.display='none';const el=document.getElementById('pd');el.style.display='flex';el.innerHTML=out;
+  clients.forEach(c=>{const fid='pf'+c.name.replace(/\s/g,'');setTimeout(()=>{const iframe=document.getElementById(fid);if(!iframe)return;const doc=iframe.contentDocument||iframe.contentWindow.document;doc.open();doc.write(html);doc.close();},80);});
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('soe').style.display='none';const sel=document.getElementById('sod');sel.style.display='flex';sel.innerHTML='<div class="real-pill">&#10003; Raw HTML source from Mailtrap API</div><div class="src-box">'+esc(html)+'</div>';
+}
+function switchTab(name,el){document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+name).classList.add('active');}
+init();
+</script>
+</body>
+</html>
